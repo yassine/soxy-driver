@@ -1,5 +1,5 @@
 # soxy-driver
-A docker networking driver that redirect TCP traffic through a Proxy. The driver uses [redsocks](https://github.com/darkk/redsocks/) behind the scenes, and thus supports all the proxying strategies supported by it : socks4, socks5, http-connect, http-relay.
+A docker networking driver that redirect all the container TCP traffic through a Proxy. The driver uses [redsocks](https://github.com/darkk/redsocks/) behind the scenes, and thus supports all the proxying strategies supported by it : socks4, socks5, http-connect, http-relay.
 
 ## Usage
 The following example assumes tor is running on the host and exposes a socks5 proxy on port 9050:
