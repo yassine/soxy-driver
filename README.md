@@ -4,6 +4,8 @@ The driver uses docker's core networking library [libnetwork](https://github.com
 
 With respect to TCP-tunneling, [redsocks](https://github.com/darkk/redsocks/) is used behind the scenes, supporting therefore many proxy tunneling strategies : socks4, socks5, http-connect, http-relay.
 
+The driver embeds a [tor](https://www.torproject.org) instance that is used as a fallback socks proxy.
+
 ## Usage
 The following example uses the driver embedded tor proxy:
 
