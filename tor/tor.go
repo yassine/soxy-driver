@@ -11,7 +11,7 @@ import (
 )
 
 type Tor struct {
-  port       int64
+  SocksPort  int64
   command    *exec.Cmd
   configfile *os.File
   isRunning  bool
@@ -25,14 +25,14 @@ func New() (t *Tor) {
 }
 
 func (t *Tor) Port() (int64) {
-  return t.port
+  return t.SocksPort
 }
 
 func (t *Tor) init(){
   t.Lock()
   defer t.Unlock()
-  t.port       = utils.FindAvailablePort()
-  logrus.Debugf("using port '%d' as fallback tor proxy port", t.port)
+  t.SocksPort = utils.FindAvailablePort()
+  logrus.Debugf("using port '%d' as fallback tor proxy port", t.SocksPort)
   t.configfile = tempFileConfig(t)
   command := exec.Command("tor","-f", t.configfile.Name())
   command.Stdin  = os.Stdin
@@ -76,7 +76,7 @@ func tempFileConfig(config *Tor) *os.File {
 const torConfigurationTemplate =
   `Log notice stdout
 ExitPolicy reject *:*
-SocksPort 0.0.0.0:{{.TorSocksPort}}
+SocksPort 0.0.0.0:{{.SocksPort}}
 AutomapHostsOnResolve 1
 ControlListenAddress 0.0.0.0
 GeoIPExcludeUnknown 1
