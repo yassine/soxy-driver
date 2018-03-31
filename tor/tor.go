@@ -80,6 +80,5 @@ ExitPolicy reject *:*
 SocksPort 0.0.0.0:{{.TorSocksPort}}
 AutomapHostsOnResolve 1
 ControlListenAddress 0.0.0.0
-ControlPort 8090
 GeoIPExcludeUnknown 1
    `
