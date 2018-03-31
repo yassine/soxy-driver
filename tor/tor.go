@@ -32,6 +32,7 @@ func (t *Tor) init(){
   t.Lock()
   defer t.Unlock()
   t.port       = utils.FindAvailablePort()
+  logrus.Debugf("using port '%d' as fallback tor proxy port", t.port)
   t.configfile = tempFileConfig(t)
   command := exec.Command("tor","-f", t.configfile.Name())
   command.Stdin  = os.Stdin
