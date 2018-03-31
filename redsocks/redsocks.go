@@ -1,260 +1,268 @@
 package soxy
 
 import (
-  "github.com/docker/libnetwork/iptables"
-  "github.com/sirupsen/logrus"
-  "github.com/yassine/soxy-driver/utils"
-  "io/ioutil"
-  "net"
-  "os"
-  "os/exec"
-  "strconv"
-  "sync"
-  "text/template"
-  "fmt"
-)
-const (
-  IptablesSoxyChain = "SOXY_DRIVER_CHAIN"
+	"fmt"
+	"github.com/docker/libnetwork/iptables"
+	"github.com/sirupsen/logrus"
+	"github.com/yassine/soxy-driver/utils"
+	"io/ioutil"
+	"net"
+	"os"
+	"os/exec"
+	"strconv"
+	"sync"
+	"text/template"
 )
 
 const (
-  BindPort      = "soxy.bindport"
-  BindAddress   = "soxy.bindaddress"
-  ProxyAddress  = "soxy.proxyaddress"
-  ProxyPort     = "soxy.proxyport"
-  ProxyType     = "soxy.proxytype"
-  ProxyUser     = "soxy.proxyuser"
-  ProxyPassword = "soxy.proxypassword"
+  //IptablesSoxyChain the name of the chain as it would appear in iptables
+	IptablesSoxyChain = "SOXY_DRIVER_CHAIN"
 )
 
+const (
+	bindPort      = "soxy.bindport"
+	bindAddress   = "soxy.bindaddress"
+	proxyAddress  = "soxy.proxyaddress"
+	proxyPort     = "soxy.proxyport"
+	proxyType     = "soxy.proxytype"
+	proxyUser     = "soxy.proxyuser"
+	proxyPassword = "soxy.proxypassword"
+)
+
+//RedSocksConfiguration A base structure representing a Redsocks configuration context
 type RedSocksConfiguration struct {
-  BindPort      int64
-  BindAddress   string
-  ProxyAddress  string
-  ProxyPort     int64
-  ProxyType     string
-  ProxyUser     string
-  ProxyPassword string
+  //BindPort the port on which redsocks would listen to tunnel traffic
+	BindPort      int64
+  //BindAddress the address on which redsocks would listen to tunnel traffic
+	BindAddress   string
+  //ProxyAddress the proxy address
+	ProxyAddress  string
+  //ProxyPort the proxy port
+	ProxyPort     int64
+  //ProxyType the proxy type. Available options : as per redsocks support
+	ProxyType     string
+  //ProxyUser the proxy user (if authentication applies)
+	ProxyUser     string
+  //ProxyPassword the proxy password (if authentication applies)
+	ProxyPassword string
 }
 
-
-
+//RedSocks A base structure representing a Redsocks execution context
 type RedSocks struct {
-  Configuration RedSocksConfiguration
-  Command       *exec.Cmd
-  Configfile    *os.File
-  isRunning     bool
-  bridgeName    string
-  defaultPort   int64
-  sync.Mutex
+	Configuration RedSocksConfiguration
+	Command       *exec.Cmd
+	Configfile    *os.File
+	isRunning     bool
+	bridgeName    string
+	defaultPort   int64
+	sync.Mutex
 }
 
-func (r *RedSocks) Startup() error{
-  err := r.startup()
-  err = r.forwardToRedSocks(iptables.Append)
-  return err
+//Startup Start redsocks with the given configuration
+func (r *RedSocks) Startup() error {
+	err := r.startup()
+	err = r.forwardToRedSocks(iptables.Append)
+	return err
 }
 
-func (r *RedSocks) Shutdown() error{
-  err := r.shutdown()
-  err = r.forwardToRedSocks(iptables.Delete)
-  return err
+//Shutdown Stops redsocks with the given configuration
+func (r *RedSocks) Shutdown() error {
+	err := r.shutdown()
+	err = r.forwardToRedSocks(iptables.Delete)
+	return err
 }
 
-func (r *RedSocks) forwardToRedSocks(action iptables.Action) error{
-  port := r.Configuration.BindPort
+func (r *RedSocks) forwardToRedSocks(action iptables.Action) error {
+	port := r.Configuration.BindPort
 
-  args := []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
-    "-i", r.bridgeName,
-    "-p", "tcp",
-    //"--syn",
-    "-j", "REDIRECT",
-    "--to-ports", strconv.Itoa(int(port))}
+	args := []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
+		"-i", r.bridgeName,
+		"-p", "tcp",
+		//"--syn",
+		"-j", "REDIRECT",
+		"--to-ports", strconv.Itoa(int(port))}
 
-  if output, err := iptables.Raw(args...); err != nil {
-    logrus.Errorf("forwardToRedSocks error : %v", err)
-  } else if len(output) != 0 {
-    logrus.Errorf("forwardToRedSocks output error : %v", output)
-  }
+	if output, err := iptables.Raw(args...); err != nil {
+		logrus.Errorf("forwardToRedSocks error : %v", err)
+	} else if len(output) != 0 {
+		logrus.Errorf("forwardToRedSocks output error : %v", output)
+	}
 
-  args = []string{"-t", string(iptables.Nat), string(action), "PREROUTING",
-    "-i", r.bridgeName,
-    "-p", "tcp",
-    "-j", IptablesSoxyChain}
+	args = []string{"-t", string(iptables.Nat), string(action), "PREROUTING",
+		"-i", r.bridgeName,
+		"-p", "tcp",
+		"-j", IptablesSoxyChain}
 
-  if output, err := iptables.Raw(args...); err != nil {
-    return err
-  } else if len(output) != 0 {
-    return iptables.ChainError{Chain: "PREROUTING", Output: output}
-  }
+	if output, err := iptables.Raw(args...); err != nil {
+		return err
+	} else if len(output) != 0 {
+		return iptables.ChainError{Chain: "PREROUTING", Output: output}
+	}
 
+	args = []string{"-t", string(iptables.Nat),
+		string(action),
+		"OUTPUT",
+		"-p", "tcp",
+		"-j", IptablesSoxyChain}
 
-  args = []string{"-t", string(iptables.Nat),
-    string(action),
-    "OUTPUT",
-    "-p", "tcp",
-    "-j", IptablesSoxyChain}
+	if output, err := iptables.Raw(args...); err != nil {
+		return err
+	} else if len(output) != 0 {
+		return iptables.ChainError{Chain: "PREROUTING", Output: output}
+	}
 
-  if output, err := iptables.Raw(args...); err != nil {
-    return err
-  } else if len(output) != 0 {
-    return iptables.ChainError{Chain: "PREROUTING", Output: output}
-  }
-
-  return nil
+	return nil
 }
 
-func NewRed(params map[string]string, bridgeName string, defaultProxyPort int64) (*RedSocks, error){
-  configuration, err := newRedSocksConfiguration(params, defaultProxyPort)
-  if err != nil {
-    return nil, err
-  }
-  err = configuration.validate()
-  if err != nil {
-    return nil, fmt.Errorf("redsocks validation error")
-  }
-  configFile      := tempFileConfig(&configuration)
-  command := exec.Command("redsocks","-c", configFile.Name())
-  command.Stdin  = os.Stdin
-  command.Stdout = os.Stdout
-  command.Stderr = os.Stderr
+//New Creates and initialize a Redsocks context
+func New(params map[string]string, bridgeName string, defaultProxyPort int64) (*RedSocks, error) {
+	configuration, err := newRedSocksConfiguration(params, defaultProxyPort)
+	if err != nil {
+		return nil, err
+	}
+	err = configuration.validate()
+	if err != nil {
+		return nil, fmt.Errorf("redsocks validation error")
+	}
+	configFile := tempFileConfig(&configuration)
+	command := exec.Command("redsocks", "-c", configFile.Name())
+	command.Stdin = os.Stdin
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
 
-  return &RedSocks{
-    Configuration : configuration,
-    Configfile    : configFile,
-    Command       : command,
-    isRunning     : false,
-    bridgeName    : bridgeName,
-    defaultPort   : defaultProxyPort,
-  }, nil
+	return &RedSocks{
+		Configuration: configuration,
+		Configfile:    configFile,
+		Command:       command,
+		isRunning:     false,
+		bridgeName:    bridgeName,
+		defaultPort:   defaultProxyPort,
+	}, nil
 }
 
-func(r *RedSocks) startup() error{
-  r.Lock()
-  defer r.Unlock()
-  if !r.isRunning {
-    r.isRunning = true
-    err := r.Command.Start()
-    if err != nil {
-      logrus.Error(err)
-      return err
-    }
-  }
-  return nil
+func (r *RedSocks) startup() error {
+	r.Lock()
+	defer r.Unlock()
+	if !r.isRunning {
+		r.isRunning = true
+		err := r.Command.Start()
+		if err != nil {
+			logrus.Error(err)
+			return err
+		}
+	}
+	return nil
 }
 
-func(r *RedSocks) shutdown() error{
-  //Kill the process
-  err := r.Command.Process.Kill()
-  //Remove config file
-  err = os.Remove(r.Configfile.Name())
-  return err
+func (r *RedSocks) shutdown() error {
+	//Kill the process
+	err := r.Command.Process.Kill()
+	//Remove config file
+	err = os.Remove(r.Configfile.Name())
+	return err
 }
 
-func(r *RedSocks) Wait(){
-  r.Command.Process.Wait()
+func (r *RedSocks) wait() {
+	r.Command.Process.Wait()
 }
 
-func(r RedSocksConfiguration) validate() error{
-  if r.ProxyAddress == "" {
-    return utils.LogAndThrowError("Proxy address is mandatory")
-  }
-  if r.ProxyPort == 0 {
-    return utils.LogAndThrowError("Proxy port is mandatory")
-  }
-  return nil
+func (r RedSocksConfiguration) validate() error {
+	if r.ProxyAddress == "" {
+		return utils.LogAndThrowError("Proxy address is mandatory")
+	}
+	if r.ProxyPort == 0 {
+		return utils.LogAndThrowError("Proxy port is mandatory")
+	}
+	return nil
 }
 
-func newRedSocksConfiguration(params map[string]string, defaultProxyPort int64) (RedSocksConfiguration, error){
-  var config = RedSocksConfiguration{}
-  var err error
+func newRedSocksConfiguration(params map[string]string, defaultProxyPort int64) (RedSocksConfiguration, error) {
+	var config = RedSocksConfiguration{}
+	var err error
 
-  for k,v := range params {
-    logrus.Debugf("Param: '%s' is equal to :  '%s'",k, v)
-  }
+	for k, v := range params {
+		logrus.Debugf("Param: '%s' is equal to :  '%s'", k, v)
+	}
 
-  if val, ok := params[BindPort]; ok {
-    logrus.Debugf("param '%s' is equal to '%s'", BindPort, ok)
-    config.BindPort, _ = strconv.ParseInt(val, 10, 32)
-    if err != nil {
-      return config, utils.LogAndThrowError("error while parsing BindPort param : {}", val)
-    }
-  }else{
-    config.BindPort = utils.FindAvailablePort()
-    logrus.Debugf("No port specified , using port '%s'", config.BindPort)
-  }
+	if val, ok := params[bindPort]; ok {
+		logrus.Debugf("param '%s' is equal to '%s'", bindPort, ok)
+		config.BindPort, _ = strconv.ParseInt(val, 10, 32)
+		if err != nil {
+			return config, utils.LogAndThrowError("error while parsing BindPort param : {}", val)
+		}
+	} else {
+		config.BindPort = utils.FindAvailablePort()
+		logrus.Debugf("No port specified , using port '%s'", config.BindPort)
+	}
 
-  if val, ok := params[BindAddress]; ok {
-    logrus.Debugf("param '%s' is equal to '%s'", BindAddress, val)
-    config.BindAddress = val
-    if err != nil {
-      return config, utils.LogAndThrowError("error while parsing BindAddress param : {}", val)
-    }
-  }
+	if val, ok := params[bindAddress]; ok {
+		logrus.Debugf("param '%s' is equal to '%s'", bindAddress, val)
+		config.BindAddress = val
+		if err != nil {
+			return config, utils.LogAndThrowError("error while parsing BindAddress param : {}", val)
+		}
+	}
 
-  if val, ok := params[ProxyAddress]; ok {
-    logrus.Debugf("param '%s' is equal to '%s'", ProxyAddress, val)
-    config.ProxyAddress = val
-    if err != nil {
-      return config, utils.LogAndThrowError("error while parsing ProxyAddress param : {}", val)
-    }
-  }else{
-    config.ProxyAddress = "localhost"
-  }
+	if val, ok := params[proxyAddress]; ok {
+		logrus.Debugf("param '%s' is equal to '%s'", proxyAddress, val)
+		config.ProxyAddress = val
+		if err != nil {
+			return config, utils.LogAndThrowError("error while parsing ProxyAddress param : {}", val)
+		}
+	} else {
+		config.ProxyAddress = "localhost"
+	}
 
-  if val, ok := params[ProxyPort]; ok {
-    logrus.Debugf("param '%s' is equal to %s", ProxyPort, val)
-    config.ProxyPort, err = strconv.ParseInt(val, 10, 32)
-    if err != nil {
-      return config, utils.LogAndThrowError("error while parsing ProxyPort param : {}", val)
-    }
-  }else{
-    config.ProxyPort = defaultProxyPort
-  }
+	if val, ok := params[proxyPort]; ok {
+		logrus.Debugf("param '%s' is equal to %s", proxyPort, val)
+		config.ProxyPort, err = strconv.ParseInt(val, 10, 32)
+		if err != nil {
+			return config, utils.LogAndThrowError("error while parsing ProxyPort param : {}", val)
+		}
+	} else {
+		config.ProxyPort = defaultProxyPort
+	}
 
-  if val, ok := params[ProxyType]; ok {
-    logrus.Debugf("param '%s' is equal to '%s'", ProxyType, val)
-    config.ProxyType = val
-  }
+	if val, ok := params[proxyType]; ok {
+		logrus.Debugf("param '%s' is equal to '%s'", proxyType, val)
+		config.ProxyType = val
+	}
 
-  if val, ok := params[ProxyPassword]; ok {
-    logrus.Debugf("param '%s' is equal to '%s'", ProxyPassword, val)
-    config.ProxyPassword = val
-  }
+	if val, ok := params[proxyPassword]; ok {
+		logrus.Debugf("param '%s' is equal to '%s'", proxyPassword, val)
+		config.ProxyPassword = val
+	}
 
-  if val, ok := params[ProxyUser]; ok {
-    logrus.Debugf("param '%s' is equal to '%s'", ProxyUser, val)
-    config.ProxyUser = val
-  }
+	if val, ok := params[proxyUser]; ok {
+		logrus.Debugf("param '%s' is equal to '%s'", proxyUser, val)
+		config.ProxyUser = val
+	}
 
-  return config, nil
+	return config, nil
 }
 
 func tempFileConfig(config *RedSocksConfiguration) *os.File {
-  t := template.Must(template.New("configTemplate").Funcs(template.FuncMap{
-    "isSet": isSet,
-    "isStrSet":isStrSet,
-  }).Parse(redSocksConfigurationTemplate))
-  tempFile, _ := ioutil.TempFile("/tmp","redsocks")
-  err := t.Execute(tempFile, config)
-  if err != nil {
-    logrus.Error(err)
-  }
-  return tempFile
+	t := template.Must(template.New("configTemplate").Funcs(template.FuncMap{
+		"isSet":    isSet,
+		"isStrSet": isStrSet,
+	}).Parse(redSocksConfigurationTemplate))
+	tempFile, _ := ioutil.TempFile("/tmp", "redsocks")
+	err := t.Execute(tempFile, config)
+	if err != nil {
+		logrus.Error(err)
+	}
+	return tempFile
 }
 
-func isSet( i net.IPAddr ) bool{
-  return i.IP != nil && i.IP.String() != ""
+func isSet(i net.IPAddr) bool {
+	return i.IP != nil && i.IP.String() != ""
 }
 
 func isStrSet(s string) bool {
-  return s != ""
+	return s != ""
 }
 
-
-
-const redSocksConfigurationTemplate =
- `  base {
+const redSocksConfigurationTemplate = `  base {
     log_debug = off;
     log_info = on;
     log = stderr;

@@ -37,4 +37,5 @@ Option | Description | Default
 *soxy.proxyuser* | The proxy user if the proxy requires Authentication | none
 *soxy.proxypassword* | The proxy user if the proxy requires Authentication | none
 
-Configuration params maps to a given network only, and thus must be passed when creating a network `docker network create`
+> Configuration params maps to one given network only, and thus can be passed when creating any network through `docker network create`. 
+If the network configuration is skipped, the driver falls-back on the single embedded tor instance socks proxy. 
