@@ -63,9 +63,7 @@ func(t *Tor) Shutdown() error{
 }
 
 func tempFileConfig(config *Tor) *os.File {
-  t := template.Must(template.New("configTemplate").Funcs(template.FuncMap{
-    "TorSocksPort": config.port,
-  }).Parse(torConfigurationTemplate))
+  t := template.Must(template.New("configTemplate").Parse(torConfigurationTemplate))
   tempFile, _ := ioutil.TempFile("/tmp","tor-config")
   err := t.Execute(tempFile, config)
   if err != nil {
