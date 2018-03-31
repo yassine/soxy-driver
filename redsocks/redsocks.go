@@ -45,6 +45,7 @@ type RedSocks struct {
   Configfile    *os.File
   isRunning     bool
   bridgeName    string
+  defaultPort   int64
   sync.Mutex
 }
 
@@ -103,8 +104,8 @@ func (r *RedSocks) forwardToRedSocks(action iptables.Action) error{
   return nil
 }
 
-func NewRed(params map[string]string, bridgeName string) (*RedSocks, error){
-  configuration, err := newRedSocksConfiguration(params)
+func NewRed(params map[string]string, bridgeName string, defaultProxyPort int64) (*RedSocks, error){
+  configuration, err := newRedSocksConfiguration(params, defaultProxyPort)
   if err != nil {
     return nil, err
   }
@@ -124,6 +125,7 @@ func NewRed(params map[string]string, bridgeName string) (*RedSocks, error){
     Command       : command,
     isRunning     : false,
     bridgeName    : bridgeName,
+    defaultPort   : defaultProxyPort,
   }, nil
 }
 
@@ -163,7 +165,7 @@ func(r RedSocksConfiguration) validate() error{
   return nil
 }
 
-func newRedSocksConfiguration(params map[string]string) (RedSocksConfiguration, error){
+func newRedSocksConfiguration(params map[string]string, defaultProxyPort int64) (RedSocksConfiguration, error){
   var config = RedSocksConfiguration{}
   var err error
 
@@ -207,7 +209,7 @@ func newRedSocksConfiguration(params map[string]string) (RedSocksConfiguration, 
       return config, utils.LogAndThrowError("error while parsing ProxyPort param : {}", val)
     }
   }else{
-    config.ProxyPort = 9050
+    config.ProxyPort = defaultProxyPort
   }
 
   if val, ok := params[ProxyType]; ok {

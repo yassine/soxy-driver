@@ -13,12 +13,14 @@ import (
   "github.com/yassine/soxy-driver/redsocks"
   "net"
   "github.com/docker/libnetwork/options"
+  "github.com/yassine/soxy-driver/tor"
 )
 
 //Driver A Driver structure
 type Driver struct {
   delegate *driverapi.Driver
   redsocksIndex map[string]*soxy.RedSocks
+  tor *tor.Tor
 }
 
 //New Creates a new Driver instance
@@ -34,7 +36,7 @@ func New() Driver{
   if err != nil {
     logrus.Error(err.Error())
   }
-  driver := Driver{ delegate: &driverCallback.driver }
+  driver := Driver{ delegate: &driverCallback.driver , tor: tor.New(), redsocksIndex: make(map[string]*soxy.RedSocks) }
   driver.init()
   return driver
 }
@@ -54,7 +56,7 @@ func (d *Driver) CreateNetwork (request *network.CreateNetworkRequest) error{
   if link != nil {
     allocatedBridgeName := link.Attrs().Name
     logrus.Debug("Allocated the bridge : ", allocatedBridgeName, " to network : ", request.NetworkID)
-    redsocksContext, redsocksError := soxy.NewRed(request.Options[netlabel.GenericData].(map[string]string), allocatedBridgeName)
+    redsocksContext, redsocksError := soxy.NewRed(request.Options[netlabel.GenericData].(map[string]string), allocatedBridgeName, d.tor.Port())
     if redsocksError == nil {
       d.redsocksIndex[request.NetworkID] = redsocksContext
       redsocksContext.Startup()
@@ -221,11 +223,12 @@ func (d *Driver) ShutDown(){
     value.Shutdown()
   }
   d.removeChain()
+  (*d.tor).Shutdown()
 }
 
 func (d *Driver) init(){
   d.createChain()
-  d.redsocksIndex = make(map[string]*soxy.RedSocks)
+  (*d.tor).Startup()
 }
 
 func (d *Driver) createChain() error{
