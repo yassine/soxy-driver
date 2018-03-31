@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:edge
 MAINTAINER Yassine Echabbi <github.com/yassine>
 
 ENV GOPATH /go-workspace

@@ -9,7 +9,7 @@ The following example assumes tor is running on the host and exposes a socks5 pr
 1) Build the image
 `docker build . -t yassine/soxy-driver`
 2) Run the driver container
-`docker run -d --net host --name soxy-driver yassine/soxy-driver`
+`docker run --privileged -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver yassine/soxy-driver`
 3) Create a network based on the driver
 `docker network create -d soxy-driver soxy_network -o "soxy.proxyaddress"="localhost" -o "soxy.proxyport"="9050"`
 4) Test a container
