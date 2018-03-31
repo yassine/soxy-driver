@@ -15,7 +15,7 @@ import (
 )
 
 const (
-  //IptablesSoxyChain the name of the chain as it would appear in iptables
+	//IptablesSoxyChain the name of the chain as it would appear in iptables
 	IptablesSoxyChain = "SOXY_DRIVER_CHAIN"
 )
 
@@ -31,19 +31,19 @@ const (
 
 //RedSocksConfiguration A base structure representing a Redsocks configuration context
 type RedSocksConfiguration struct {
-  //BindPort the port on which redsocks would listen to tunnel traffic
-	BindPort      int64
-  //BindAddress the address on which redsocks would listen to tunnel traffic
-	BindAddress   string
-  //ProxyAddress the proxy address
-	ProxyAddress  string
-  //ProxyPort the proxy port
-	ProxyPort     int64
-  //ProxyType the proxy type. Available options : as per redsocks support
-	ProxyType     string
-  //ProxyUser the proxy user (if authentication applies)
-	ProxyUser     string
-  //ProxyPassword the proxy password (if authentication applies)
+	//BindPort the port on which redsocks would listen to tunnel traffic
+	BindPort int64
+	//BindAddress the address on which redsocks would listen to tunnel traffic
+	BindAddress string
+	//ProxyAddress the proxy address
+	ProxyAddress string
+	//ProxyPort the proxy port
+	ProxyPort int64
+	//ProxyType the proxy type. Available options : as per redsocks support
+	ProxyType string
+	//ProxyUser the proxy user (if authentication applies)
+	ProxyUser string
+	//ProxyPassword the proxy password (if authentication applies)
 	ProxyPassword string
 }
 

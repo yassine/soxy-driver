@@ -50,7 +50,7 @@ func protocolValueOf(val uint8) types.Protocol {
 }
 
 var (
-  //LocalAddresses reserved local addresses
+	//LocalAddresses reserved local addresses
 	LocalAddresses = []string{
 		"0.0.0.0/8",
 		"10.0.0.0/8",

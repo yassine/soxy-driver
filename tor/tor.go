@@ -25,6 +25,7 @@ func New() (t *Tor) {
 	tor.init()
 	return tor
 }
+
 //Port returns the embedded Tor instance allocated TCP port
 func (t *Tor) Port() int64 {
 	return t.SocksPort
@@ -42,6 +43,7 @@ func (t *Tor) init() {
 	command.Stderr = os.Stderr
 	t.command = command
 }
+
 //Startup starts the embedded Tor instance
 func (t *Tor) Startup() error {
 	t.Lock()
