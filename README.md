@@ -1,4 +1,6 @@
 # soxy-driver
+![image](https://goreportcard.com/badge/github.com/yassine/soxy-driver)
+
 A docker networking driver that tunnels all the container TCP traffic through a Proxy. 
 The driver uses docker's core networking library [libnetwork](https://github.com/docker/libnetwork) and benefits thus from its stability.
 
