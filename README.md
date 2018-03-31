@@ -15,7 +15,7 @@ The following example uses the driver embedded tor proxy:
 `docker network create -d soxy-driver soxy_network`
 
 > Note: If you want to test against another proxy than the embedded tor-based one, you can pass the proxy params using
-the `-o` option. For example : `"soxy.proxyaddress"="%PROXY_HOST%" -o "soxy.proxyport"="%PROXY_PORT%"`, see the next section for all available
+the `-o` option. For example : `docker network create -d soxy-driver soxy_network -o "soxy.proxyaddress"="%PROXY_HOST%" -o "soxy.proxyport"="%PROXY_PORT%"`, see the next section for all available
 configuration options.
 
 You can now create a container that uses the network formerly created and test the tunneling:
