@@ -30,7 +30,7 @@ Configuration options are passed when creating a given network (See example abov
 Option | Description | Default
 --- | --- | ---
 *soxy.proxyaddress* | The address of the proxy through which the traffic is redirected | localhost
-*soxy.proxyport* | The proxy port | 9050 (tor)
+*soxy.proxyport* | The proxy port | A random port that maps to the embedded tor instance socks port
 *soxy.proxytype* | The proxy type | socks5 (available choices : socks4, socks5, http-connect, http-relay)
 *soxy.proxyuser* | The proxy user if the proxy requires Authentication | none
 *soxy.proxypassword* | The proxy user if the proxy requires Authentication | none
