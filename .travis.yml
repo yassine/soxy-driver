@@ -9,7 +9,7 @@ jobs:
  include:
   - stage: test
     before_install:
-      - apt-get install -y curl
+      - sudo apt-get install -y curl
       - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
     install:
       - dep ensure
@@ -17,7 +17,7 @@ jobs:
       - go test ./driver
   - stage: deploy
     before_install:
-      - apt-get install -y curl jq
+      - sudo apt-get install -y curl jq
     install:
       - docker build . -t yassine-soxy-driver
       - docker tag yassine-soxy-driver $DOCKER_USERNAME/soxy-driver
