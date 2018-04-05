@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:edge
 MAINTAINER Yassine Echabbi <github.com/yassine>
 
 ENV GOPATH /go-workspace
@@ -7,9 +7,7 @@ ENV PATH $GOPATH/bin:$PATH
 RUN mkdir -p $GOPATH/bin
 COPY . $GOPATH/src/github.com/yassine/soxy-driver
 
-RUN echo http://dl-3.alpinelinux.org/alpine/latest-stable/community >> /etc/apk/repositories \
-    && echo http://dl-3.alpinelinux.org/alpine/latest-stable/testing >> /etc/apk/repositories \
-    && apk update \
+RUN apk update \
     && apk upgrade \
     # Permanent Deps
     && apk add --no-cache iptables redsocks tor \
