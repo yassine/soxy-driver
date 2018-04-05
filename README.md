@@ -1,7 +1,8 @@
 # soxy-driver
 ![image](https://goreportcard.com/badge/github.com/yassine/soxy-driver)
+![Build Status](https://www.travis-ci.org/yassine/soxy-driver.svg?branch=dev)
 
-A docker networking driver that tunnels all the container TCP traffic through a Proxy. 
+A docker networking driver that tunnels containers TCP traffic through a Proxy. 
 The driver uses docker's core networking library [libnetwork](https://github.com/docker/libnetwork) and benefits thus from its stability.
 
 With respect to TCP-tunneling, [redsocks](https://github.com/darkk/redsocks/) is used behind the scenes, supporting therefore many proxy tunneling strategies : socks4, socks5, http-connect, http-relay.
@@ -11,8 +12,8 @@ The driver embeds a [tor](https://www.torproject.org) instance that is used as a
 ## Usage
 The following example uses the driver embedded tor proxy:
 
-1) Build the image
-`docker build . -t yassine/soxy-driver`
+1) Pull the image
+`docker pull yassine/soxy-driver`
 2) Run the driver container
 `docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine/soxy-driver`
 3) Create a network based on the driver
