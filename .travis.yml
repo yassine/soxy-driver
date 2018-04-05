@@ -14,7 +14,7 @@ jobs:
         - dep ensure
       script:
         - go test ./driver
-  - stage: test and deploy the docker image
+  - stage: deploy
       before_install:
         - apt-get install -y curl jq
       install:
@@ -28,3 +28,6 @@ jobs:
       after_success:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker push $DOCKER_USERNAME/soxy-driver:$(cat ./VERSION)
+stages:
+  - test
+  - deploy
