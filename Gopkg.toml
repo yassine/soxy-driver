@@ -58,8 +58,6 @@
     ".",
     "nl"
   ]
-  revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
-  version = "v1.0.0"
 
 [[override]]
   name = "github.com/ishidawataru/sctp"
