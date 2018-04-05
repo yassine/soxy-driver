@@ -27,14 +27,21 @@
 [[constraint]]
   branch = "master"
   name = "github.com/docker/docker"
+  revision = "859e43e64c4358c9aa48e045c0e5b048361a4c9b"
 
 [[constraint]]
   branch = "master"
   name   = "github.com/docker/go-plugins-helpers"
+  packages = [
+    "network",
+    "sdk"
+  ]
+  revision = "61cb8e2334204460162c8bd2417cd43cb71da66f"
 
 [[constraint]]
   branch = "master"
   name   = "github.com/docker/libnetwork"
+  revision = "dbba3776ccf2476778025a9ae5f4af124b5206bb"
 
 [[constraint]]
   name = "github.com/fsouza/go-dockerclient"
@@ -47,6 +54,12 @@
 [[constraint]]
   name = "github.com/vishvananda/netlink"
   version = "1.0.0"
+  packages = [
+    ".",
+    "nl"
+  ]
+  revision = "a2ad57a690f3caf3015351d2d6e1c0b95c349752"
+  version = "v1.0.0"
 
 [[override]]
   name = "github.com/ishidawataru/sctp"

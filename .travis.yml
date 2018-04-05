@@ -1,0 +1,30 @@
+language: go
+sudo: required
+dist: trusty
+go:
+  - "1.8.5"
+services:
+  - docker
+jobs:
+  - stage: test
+      before_install:
+        - apt-get install -y curl
+        - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+      install:
+        - dep ensure
+      script:
+        - go test ./driver
+  - stage: test and deploy the docker image
+      before_install:
+        - apt-get install -y curl jq
+      install:
+        - docker build . -t yassine-soxy-driver
+        - docker tag yassine-soxy-driver $DOCKER_USERNAME/soxy-driver
+        - docker images
+        - docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine-soxy-driver
+        - docker network create -d soxy-driver soxy_network
+      script:
+        - docker run --rm -it --net soxy_network uzyexe/curl --max-time 15 --retry 8 -s https://check.torproject.org/api/ip | jq '.IsTor' | grep true
+      after_success:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker push $DOCKER_USERNAME/soxy-driver:$(cat ./VERSION)
