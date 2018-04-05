@@ -29,7 +29,6 @@
   name = "github.com/docker/docker"
 
 [[constraint]]
-  branch = "master"
   name   = "github.com/docker/go-plugins-helpers"
   packages = [
     "network",
@@ -38,7 +37,6 @@
   revision = "61cb8e2334204460162c8bd2417cd43cb71da66f"
 
 [[constraint]]
-  branch = "master"
   name   = "github.com/docker/libnetwork"
   revision = "dbba3776ccf2476778025a9ae5f4af124b5206bb"
 
