@@ -6,6 +6,7 @@ go:
 services:
   - docker
 jobs:
+ include:
   - stage: test
     before_install:
       - apt-get install -y curl
