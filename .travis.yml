@@ -29,6 +29,15 @@ jobs:
     after_success:
       - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
       - docker push $DOCKER_USERNAME/soxy-driver:$(cat ./VERSION)
+  - stage: deploy_latest
+    install:
+      - docker build . -t yassine-soxy-driver
+      - docker tag yassine-soxy-driver $DOCKER_USERNAME/soxy-driver:latest
+    after_success:
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - docker push $DOCKER_USERNAME/soxy-driver:latest
 stages:
   - test
   - deploy
+  - name: deploy_latest
+    if: branch = master
