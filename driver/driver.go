@@ -58,7 +58,7 @@ func (d *Driver) CreateNetwork(request *network.CreateNetworkRequest) error {
 	if link != nil {
 		allocatedBridgeName := link.Attrs().Name
 		logrus.Debug("Allocated the bridge : ", allocatedBridgeName, " to network : ", request.NetworkID)
-		redsocksContext, redsocksError := soxy.New(request.Options[netlabel.GenericData].(map[string]string), allocatedBridgeName, d.tor.Port())
+		redsocksContext, redsocksError := soxy.New(request.Options[netlabel.GenericData].(map[string]string), allocatedBridgeName, d.tor.Port(), d.tor.DnsPort)
 		if redsocksError == nil {
 			d.redsocksIndex[request.NetworkID] = redsocksContext
 			redsocksContext.Startup()
@@ -250,18 +250,29 @@ func (d *Driver) init() {
 func (d *Driver) createChain() error {
 	//create SOXYDRIVER CHAIN
 	logrus.Debug("creating soxy-driver chain")
-	args := []string{"-t", string(iptables.Nat), "-N", soxy.IptablesSoxyChain}
+	err := createChain(iptables.Nat, true)
+	if err != nil {
+		return err
+	}
+	err = createChain(iptables.Filter, true)
+	return err
+}
+
+func createChain(table iptables.Table, escapeLocal bool) error {
+	args := []string{"-t", string(table), "-N", soxy.IptablesSoxyChain}
 	if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
-		logrus.Debug(fmt.Errorf("couldn't setup soxychain chain : %s", err).Error())
+		logrus.Debug(fmt.Errorf("couldn't setup soxychain chain in table '%s' : %s", table, err).Error())
 	} else {
 		//escape local addresses
-		for _, address := range LocalAddresses {
-			args = []string{"-t", string(iptables.Nat), string(iptables.Append), soxy.IptablesSoxyChain,
-				"-d", address,
-				"-j", "RETURN"}
-			if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
-				logrus.Errorf("couldn't setup soxychain local addresss escape : %v", address)
-				return err
+		if escapeLocal {
+			for _, address := range LocalAddresses {
+				args = []string{"-t", string(table), string(iptables.Append), soxy.IptablesSoxyChain,
+					"-d", address,
+					"-j", "RETURN"}
+				if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
+					logrus.Errorf("couldn't setup in table %s soxychain local addresss escape : %v", address, table)
+					return err
+				}
 			}
 		}
 	}

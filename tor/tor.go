@@ -13,6 +13,7 @@ import (
 //Tor a base tor structure that encapsulate the embedded tor instance
 type Tor struct {
 	SocksPort  int64
+	DnsPort    int64
 	command    *exec.Cmd
 	configfile *os.File
 	isRunning  bool
@@ -35,6 +36,7 @@ func (t *Tor) init() {
 	t.Lock()
 	defer t.Unlock()
 	t.SocksPort = utils.FindAvailablePort()
+	t.DnsPort = utils.FindAvailablePort()
 	logrus.Debugf("using port '%d' as fallback tor proxy port", t.SocksPort)
 	t.configfile = tempFileConfig(t)
 	command := exec.Command("tor", "-f", t.configfile.Name())
@@ -81,6 +83,7 @@ func tempFileConfig(config *Tor) *os.File {
 const torConfigurationTemplate = `Log notice stdout
 ExitPolicy reject *:*
 SocksPort 0.0.0.0:{{.SocksPort}}
+DnsPort 0.0.0.0:{{.DnsPort}}
 AutomapHostsOnResolve 1
 ControlListenAddress 0.0.0.0
 GeoIPExcludeUnknown 1

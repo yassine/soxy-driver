@@ -30,10 +30,6 @@
 
 [[constraint]]
   name   = "github.com/docker/go-plugins-helpers"
-  packages = [
-    "network",
-    "sdk"
-  ]
   revision = "61cb8e2334204460162c8bd2417cd43cb71da66f"
 
 [[constraint]]
@@ -51,10 +47,6 @@
 [[constraint]]
   name = "github.com/vishvananda/netlink"
   version = "1.0.0"
-  packages = [
-    ".",
-    "nl"
-  ]
 
 [[override]]
   name = "github.com/ishidawataru/sctp"
