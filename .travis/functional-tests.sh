@@ -13,6 +13,7 @@ then
   #DNS resolution should have failed as dns is blocked
   echo "warning: resolution should have failed"
   echo "got exit status $ec"
+  exit 1
 fi
 
 #DNS should still be resolved by containers that use a network based on the driver as those requests are tunneled
