@@ -5,7 +5,7 @@
 sudo iptables -I OUTPUT -p udp --dport 53 -j DROP
 sudo iptables -I INPUT -p udp --sport 53 -j DROP
 
-dig www.google.com @ 8.8.8.8
+dig www.google.com @8.8.8.8
 ec=$?
 
 if [ $ec -eq 0 ]
