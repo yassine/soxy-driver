@@ -8,6 +8,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"net"
 	"strings"
+  "github.com/sirupsen/logrus"
 )
 
 //InterfaceInfoProxy a libnetwork InfoProxy proxy
@@ -129,9 +130,16 @@ func (proxy *InterfaceNameInfoProxy) setNames(srcName, dstPrefix string) error {
 func transform(input []*network.IPAMData) []driverapi.IPAMData {
 	var driverIPAM []driverapi.IPAMData
 	for _, element := range input {
-		gwIP, gatewayAddress, _ := net.ParseCIDR(element.Gateway)
+		gwIP, gatewayAddress, err := net.ParseCIDR(element.Gateway)
+    if err != nil {
+      gwIP, gatewayAddress, err = net.ParseCIDR(element.Gateway+"/24")
+      if err != nil {
+        logrus.Error(err.Error())
+      }
+    }
+    gatewayAddress.IP = gwIP
 		poolIP, poolAddress, poolError := net.ParseCIDR(element.Pool)
-		gatewayAddress.IP = gwIP
+
 		if poolError != nil {
 			poolAddress.IP = poolIP
 		}

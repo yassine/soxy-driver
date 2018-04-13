@@ -45,6 +45,8 @@ type RedSocksConfiguration struct {
 	ProxyUser string
 	//ProxyPassword the proxy password (if authentication applies)
 	ProxyPassword string
+	//TunnelDNS tunnel the dns resolution through tor
+	TunnelDNS bool
 }
 
 //RedSocks A base structure representing a Redsocks execution context
@@ -55,13 +57,14 @@ type RedSocks struct {
 	isRunning     bool
 	bridgeName    string
 	defaultPort   int64
+	dnsPort       int64
 	sync.Mutex
 }
 
 //Startup Start redsocks with the given configuration
 func (r *RedSocks) Startup() error {
-	err := r.startup()
-	err = r.forwardToRedSocks(iptables.Append)
+	err := r.forwardToRedSocks(iptables.Append)
+	err = r.startup()
 	return err
 }
 
@@ -69,16 +72,32 @@ func (r *RedSocks) Startup() error {
 func (r *RedSocks) Shutdown() error {
 	err := r.shutdown()
 	err = r.forwardToRedSocks(iptables.Delete)
+	if err != nil {
+		logrus.Error(err.Error())
+	}
 	return err
 }
 
 func (r *RedSocks) forwardToRedSocks(action iptables.Action) error {
 	port := r.Configuration.BindPort
+	dnsPort := r.dnsPort
 
-	args := []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
+  //Pre-routing go to the chain
+	args := []string{"-t", string(iptables.Nat), string(action), "PREROUTING",
+		"-i", r.bridgeName,
+		"-j", IptablesSoxyChain}
+
+	if output, err := iptables.Raw(args...); err != nil {
+		return err
+	} else if len(output) != 0 {
+		return iptables.ChainError{Chain: "PREROUTING", Output: output}
+	}
+
+	//TCP is redirected
+	args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
 		"-i", r.bridgeName,
 		"-p", "tcp",
-		//"--syn",
+		"--syn",
 		"-j", "REDIRECT",
 		"--to-ports", strconv.Itoa(int(port))}
 
@@ -88,34 +107,40 @@ func (r *RedSocks) forwardToRedSocks(action iptables.Action) error {
 		logrus.Errorf("forwardToRedSocks output error : %v", output)
 	}
 
-	args = []string{"-t", string(iptables.Nat), string(action), "PREROUTING",
-		"-i", r.bridgeName,
-		"-p", "tcp",
-		"-j", IptablesSoxyChain}
+  //udp dns is redirected through tor
+  args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
+    "-i", r.bridgeName,
+    "-p", "udp",
+    "--dport", "53",
+    "-j", "REDIRECT",
+    "--to-ports", strconv.Itoa(int(dnsPort)),
+  }
 
-	if output, err := iptables.Raw(args...); err != nil {
-		return err
-	} else if len(output) != 0 {
-		return iptables.ChainError{Chain: "PREROUTING", Output: output}
-	}
+  if output, err := iptables.Raw(args...); err != nil {
+    logrus.Errorf("forwardToRedSocks DNS error : %v", err)
+  } else if len(output) != 0 {
+    logrus.Errorf("forwardToRedSocks DNS output error : %v", output)
+  }
 
-	args = []string{"-t", string(iptables.Nat),
-		string(action),
-		"OUTPUT",
-		"-p", "tcp",
-		"-j", IptablesSoxyChain}
+  args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
+    "-i", r.bridgeName,
+    "-p", "udp",
+    "--dport", strconv.Itoa(int(dnsPort)),
+    "-j", "REDIRECT",
+    "--to-ports", strconv.Itoa(int(dnsPort)),
+  }
 
-	if output, err := iptables.Raw(args...); err != nil {
-		return err
-	} else if len(output) != 0 {
-		return iptables.ChainError{Chain: "PREROUTING", Output: output}
-	}
+  if output, err := iptables.Raw(args...); err != nil {
+    logrus.Errorf("forwardToRedSocks DNS error : %v", err)
+  } else if len(output) != 0 {
+    logrus.Errorf("forwardToRedSocks DNS output error : %v", output)
+  }
 
 	return nil
 }
 
 //New Creates and initialize a Redsocks context
-func New(params map[string]string, bridgeName string, defaultProxyPort int64) (*RedSocks, error) {
+func New(params map[string]string, bridgeName string, defaultProxyPort int64, defaultDnsPort int64) (*RedSocks, error) {
 	configuration, err := newRedSocksConfiguration(params, defaultProxyPort)
 	if err != nil {
 		return nil, err
@@ -137,6 +162,7 @@ func New(params map[string]string, bridgeName string, defaultProxyPort int64) (*
 		isRunning:     false,
 		bridgeName:    bridgeName,
 		defaultPort:   defaultProxyPort,
+		dnsPort:       defaultDnsPort,
 	}, nil
 }
 

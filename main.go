@@ -26,14 +26,19 @@ func main() {
 	soxyDriver := driver.New()
 	networks, err := client.ListNetworks()
 
+	driverName := os.Getenv("DRIVER_NAME")
+	if len(driverName) == 0 {
+		driverName = DriverName
+	}
+
 	if err != nil {
 		panic(err)
 	}
 
 	var recoveredNetworks []docker.Network
 	for _, dockerNetwork := range networks {
-		if dockerNetwork.Driver == DriverName {
-			logrus.Debug(dockerNetwork.Driver, " ", dockerNetwork.Driver == DriverName)
+		if dockerNetwork.Driver == driverName {
+			logrus.Debug(dockerNetwork.Driver, " ", dockerNetwork.Driver == driverName)
 			recoveredNetworks = append(recoveredNetworks, dockerNetwork)
 		}
 	}
@@ -52,7 +57,7 @@ func main() {
 	}()
 
 	h := network.NewHandler(&soxyDriver)
-	serveError := h.ServeUnix(DriverName, 0)
+	serveError := h.ServeUnix(driverName, 0)
 	if serveError != nil {
 		logrus.Error(serveError)
 	}
