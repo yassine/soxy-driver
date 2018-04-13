@@ -30,7 +30,7 @@ You can now create a container that uses the network formerly created and test t
 Output : `{"IsTor":true,"IP":"%SOME_TOR_EXIT_NODE_IP_HERE%"}`
 
 > Note 2 : It is mandatory to specify a DNS server when creating containers, as by default docker will configure one through
-the loopback interface (127.0.0.22 as bind address). As per se, it impossible otherwise for the driver to intercept/tunnel the 
+the loopback interface (127.0.0.22 as bind address). As per se, it is impossible otherwise for the driver to intercept/tunnel the 
 DNS traffic and prevent from  [dns-leaks](https://en.wikipedia.org/wiki/DNS_leak).
 
 ## Configuration options
