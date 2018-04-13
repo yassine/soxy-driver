@@ -8,7 +8,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"net"
 	"strings"
-  "github.com/Sirupsen/logrus"
+  "github.com/sirupsen/logrus"
 )
 
 //InterfaceInfoProxy a libnetwork InfoProxy proxy
