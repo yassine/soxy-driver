@@ -24,6 +24,8 @@
 #   go-tests = true
 #   unused-packages = true
 
+required = ["github.com/sirupsen/logrus"]
+
 [[constraint]]
   branch = "master"
   name = "github.com/docker/docker"
@@ -39,10 +41,6 @@
 [[constraint]]
   name = "github.com/fsouza/go-dockerclient"
   version = "1.2.0"
-
-[[constraint]]
-  name = "github.com/sirupsen/logrus"
-  branch = "master"
 
 [[constraint]]
   name = "github.com/vishvananda/netlink"
