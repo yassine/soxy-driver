@@ -33,3 +33,11 @@ fi
 #recover system wide
 sudo iptables -D OUTPUT -p udp --dport 53 -j DROP
 sudo iptables -D INPUT -p udp --sport 53 -j DROP
+
+
+### Testing namespace capabilities
+docker run -d -e DRIVER_NAMESPACE='testing' -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name namespaced-soxy-driver --privileged yassine-soxy-driver
+docker network create -d testing__soxy-driver namespaced_driver_soxy_network
+docker run --rm --dns 8.8.8.8 -it --net namespaced_driver_soxy_network uzyexe/curl -s --retry-delay 3 --retry 10 https://check.torproject.org/api/ip  | jq '.IsTor' | grep true
+echo ""
+echo "############## TESTING ENDED ##############"

@@ -12,11 +12,25 @@ import (
 	"strconv"
 	"sync"
 	"text/template"
+  "strings"
 )
 
 const (
+  defaultChainName = "SOXY_DRIVER_CHAIN"
+)
+
+func IptablesSoxyChainName() string {
+  if len(os.Getenv("DRIVER_NAMESPACE")) == 0 {
+    return defaultChainName
+  }else {
+    parts := []string{strings.TrimSpace(os.Getenv("DRIVER_NAMESPACE")), defaultChainName}
+    return strings.Join(parts, "__")
+  }
+}
+
+var (
 	//IptablesSoxyChain the name of the chain as it would appear in iptables
-	IptablesSoxyChain = "SOXY_DRIVER_CHAIN"
+	IptablesSoxyChain = IptablesSoxyChainName()
 )
 
 const (

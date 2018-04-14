@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+  "strings"
 )
 
 const (
@@ -26,10 +27,15 @@ func main() {
 	soxyDriver := driver.New()
 	networks, err := client.ListNetworks()
 
-	driverName := os.Getenv("DRIVER_NAME")
-	if len(driverName) == 0 {
+	namespace := os.Getenv("DRIVER_NAMESPACE")
+	driverName := ""
+
+	if len(namespace) == 0 {
 		driverName = DriverName
-	}
+	}else{
+	  parts := []string{namespace, DriverName}
+    driverName = strings.Join(parts, "__")
+  }
 
 	if err != nil {
 		panic(err)
