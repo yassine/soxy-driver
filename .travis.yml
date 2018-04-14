@@ -24,8 +24,6 @@ jobs:
       - docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine-soxy-driver
       - docker network create -d soxy-driver soxy_network
     script:
-      - docker run --rm -it --net soxy_network uzyexe/curl --max-time 15 --retry 5 -s https://check.torproject.org/api/ip | jq '.IsTor' | grep true
-      # other functional tests
       - ./.travis/functional-tests.sh
   - stage: deploy
     install:
