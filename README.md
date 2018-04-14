@@ -13,10 +13,13 @@ The driver embeds a [tor](https://www.torproject.org) instance that is used as a
 The following example uses the driver embedded tor proxy:
 
 1) Pull the image
+
 `docker pull yassine/soxy-driver`
 2) Run the driver container
+
 `docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine/soxy-driver`
 3) Create a network based on the driver
+
 `docker network create -d soxy-driver soxy_network`
 
 > Note 1 : If you want to test against another proxy than the embedded tor-based one, you can pass the proxy params using
@@ -46,3 +49,19 @@ Option | Description | Default
 
 > Configuration params maps to one given network only, therefore it would be passed when creating any network through `docker network create`. 
 If the network configuration is skipped, the driver falls-back on the singleton embedded tor instance socks proxy. 
+
+## Namespacing
+If for some reason you want to run multiple instances of the driver on a given docker host, the driver supports a namespacing
+feature. When running the driver container, you can pass an environment variable `DRIVER_NAMESPACE` while creating its container.
+
+Example:
+
+1) Assume a namespace 'my-namespace'
+2) You would run the driver container as follows:
+
+`docker run -d -e DRIVER_NAMESPACE='my-namespace' -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --privileged yassine-soxy-driver`
+
+3) The driver name you would used should now be prefixed by `my-namespace__` as follows :
+
+`docker network create -d my-namespace__soxy-driver namespaced_driver_soxy_network`
+

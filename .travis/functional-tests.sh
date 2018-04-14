@@ -39,5 +39,12 @@ sudo iptables -D INPUT -p udp --sport 53 -j DROP
 docker run -d -e DRIVER_NAMESPACE='testing' -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name namespaced-soxy-driver --privileged yassine-soxy-driver
 docker network create -d testing__soxy-driver namespaced_driver_soxy_network
 docker run --rm --dns 8.8.8.8 -it --net namespaced_driver_soxy_network uzyexe/curl -s --retry-delay 3 --retry 10 https://check.torproject.org/api/ip  | jq '.IsTor' | grep true
+ec=$?
+if [ ! $ec -eq 0 ]
+then
+  #DNS resolution should pass
+  echo "got exit status $ec"
+  exit 1
+fi
 echo ""
 echo "############## TESTING ENDED ##############"
