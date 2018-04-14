@@ -1,6 +1,7 @@
 #!/bin/sh
 
 #Blocking DNS traffic system wide
+docker pull uzyexe/curl
 
 sudo iptables -I OUTPUT -p udp --dport 53 -j DROP
 sudo iptables -I INPUT -p udp --sport 53 -j DROP
