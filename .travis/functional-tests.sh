@@ -1,21 +1,12 @@
 #!/bin/sh
 
+### This tests are meant to be executed by both travis and locally during development ###
+
 #Blocking DNS traffic system wide
 docker pull uzyexe/curl
 
 sudo iptables -I OUTPUT -p udp --dport 53 -j DROP
 sudo iptables -I INPUT -p udp --sport 53 -j DROP
-
-#this should fails as udp traffic was blocked
-docker run --rm --dns 8.8.8.8 -it uzyexe/curl -s https://check.torproject.org/api/ip
-
-if [ $ec -eq 0 ]
-then
-  #DNS resolution should have failed as dns is blocked
-  echo "warning: resolution should have failed"
-  echo "got exit status $ec"
-  exit 1
-fi
 
 dig www.google.com @8.8.8.8
 ec=$?
