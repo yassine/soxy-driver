@@ -6,9 +6,9 @@ import (
 	"github.com/docker/libnetwork/drivers/bridge"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/fsouza/go-dockerclient"
+	"github.com/sirupsen/logrus"
 	"net"
 	"strings"
-  "github.com/sirupsen/logrus"
 )
 
 //InterfaceInfoProxy a libnetwork InfoProxy proxy
@@ -131,13 +131,13 @@ func transform(input []*network.IPAMData) []driverapi.IPAMData {
 	var driverIPAM []driverapi.IPAMData
 	for _, element := range input {
 		gwIP, gatewayAddress, err := net.ParseCIDR(element.Gateway)
-    if err != nil {
-      gwIP, gatewayAddress, err = net.ParseCIDR(element.Gateway+"/24")
-      if err != nil {
-        logrus.Error(err.Error())
-      }
-    }
-    gatewayAddress.IP = gwIP
+		if err != nil {
+			gwIP, gatewayAddress, err = net.ParseCIDR(element.Gateway + "/24")
+			if err != nil {
+				logrus.Error(err.Error())
+			}
+		}
+		gatewayAddress.IP = gwIP
 		poolIP, poolAddress, poolError := net.ParseCIDR(element.Pool)
 
 		if poolError != nil {

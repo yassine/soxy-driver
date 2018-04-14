@@ -7,8 +7,8 @@ import (
 	"github.com/yassine/soxy-driver/driver"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
-  "strings"
 )
 
 const (
@@ -32,10 +32,10 @@ func main() {
 
 	if len(namespace) == 0 {
 		driverName = DriverName
-	}else{
-	  parts := []string{namespace, DriverName}
-    driverName = strings.Join(parts, "__")
-  }
+	} else {
+		parts := []string{namespace, DriverName}
+		driverName = strings.Join(parts, "__")
+	}
 
 	if err != nil {
 		panic(err)
