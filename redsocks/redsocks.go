@@ -10,13 +10,27 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"text/template"
 )
 
 const (
+	defaultChainName = "SOXY_DRIVER_CHAIN"
+)
+
+func IptablesSoxyChainName() string {
+	if len(os.Getenv("DRIVER_NAMESPACE")) == 0 {
+		return defaultChainName
+	} else {
+		parts := []string{strings.TrimSpace(os.Getenv("DRIVER_NAMESPACE")), defaultChainName}
+		return strings.Join(parts, "__")
+	}
+}
+
+var (
 	//IptablesSoxyChain the name of the chain as it would appear in iptables
-	IptablesSoxyChain = "SOXY_DRIVER_CHAIN"
+	IptablesSoxyChain = IptablesSoxyChainName()
 )
 
 const (
@@ -82,7 +96,7 @@ func (r *RedSocks) forwardToRedSocks(action iptables.Action) error {
 	port := r.Configuration.BindPort
 	dnsPort := r.dnsPort
 
-  //Pre-routing go to the chain
+	//Pre-routing go to the chain
 	args := []string{"-t", string(iptables.Nat), string(action), "PREROUTING",
 		"-i", r.bridgeName,
 		"-j", IptablesSoxyChain}
@@ -107,34 +121,34 @@ func (r *RedSocks) forwardToRedSocks(action iptables.Action) error {
 		logrus.Errorf("forwardToRedSocks output error : %v", output)
 	}
 
-  //udp dns is redirected through tor
-  args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
-    "-i", r.bridgeName,
-    "-p", "udp",
-    "--dport", "53",
-    "-j", "REDIRECT",
-    "--to-ports", strconv.Itoa(int(dnsPort)),
-  }
+	//udp dns is redirected through tor
+	args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
+		"-i", r.bridgeName,
+		"-p", "udp",
+		"--dport", "53",
+		"-j", "REDIRECT",
+		"--to-ports", strconv.Itoa(int(dnsPort)),
+	}
 
-  if output, err := iptables.Raw(args...); err != nil {
-    logrus.Errorf("forwardToRedSocks DNS error : %v", err)
-  } else if len(output) != 0 {
-    logrus.Errorf("forwardToRedSocks DNS output error : %v", output)
-  }
+	if output, err := iptables.Raw(args...); err != nil {
+		logrus.Errorf("forwardToRedSocks DNS error : %v", err)
+	} else if len(output) != 0 {
+		logrus.Errorf("forwardToRedSocks DNS output error : %v", output)
+	}
 
-  args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
-    "-i", r.bridgeName,
-    "-p", "udp",
-    "--dport", strconv.Itoa(int(dnsPort)),
-    "-j", "REDIRECT",
-    "--to-ports", strconv.Itoa(int(dnsPort)),
-  }
+	args = []string{"-t", string(iptables.Nat), string(action), IptablesSoxyChain,
+		"-i", r.bridgeName,
+		"-p", "udp",
+		"--dport", strconv.Itoa(int(dnsPort)),
+		"-j", "REDIRECT",
+		"--to-ports", strconv.Itoa(int(dnsPort)),
+	}
 
-  if output, err := iptables.Raw(args...); err != nil {
-    logrus.Errorf("forwardToRedSocks DNS error : %v", err)
-  } else if len(output) != 0 {
-    logrus.Errorf("forwardToRedSocks DNS output error : %v", output)
-  }
+	if output, err := iptables.Raw(args...); err != nil {
+		logrus.Errorf("forwardToRedSocks DNS error : %v", err)
+	} else if len(output) != 0 {
+		logrus.Errorf("forwardToRedSocks DNS output error : %v", output)
+	}
 
 	return nil
 }
