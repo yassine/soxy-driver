@@ -5,6 +5,8 @@
 sudo iptables -I OUTPUT -p udp --dport 53 -j DROP
 sudo iptables -I INPUT -p udp --sport 53 -j DROP
 
+docker run --rm --dns 8.8.8.8 -it uzyexe/curl -s https://check.torproject.org/api/ip
+
 dig www.google.com @8.8.8.8
 ec=$?
 
