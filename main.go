@@ -58,6 +58,7 @@ func main() {
 				//Shutdown the driver
 				soxyDriver.ShutDown()
 			}
+      os.Remove("/run/docker/plugins/"+driverName+".sock")
 			os.Exit(0)
 		}
 	}()
