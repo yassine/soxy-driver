@@ -9,7 +9,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
