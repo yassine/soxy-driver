@@ -32,8 +32,8 @@ jobs:
       - docker tag yassine-soxy-driver $DOCKER_USERNAME/soxy-driver:$(cat ./VERSION)
     after_success:
       - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-      - docker push $DOCKER_USERNAME/soxy-driver:latest
       - docker push $DOCKER_USERNAME/soxy-driver:$(cat ./VERSION)
+      - docker push $DOCKER_USERNAME/soxy-driver:latest
 stages:
   - test
   - functional-test

@@ -34,6 +34,16 @@ fi
 sudo iptables -D OUTPUT -p udp --dport 53 -j DROP
 sudo iptables -D INPUT -p udp --sport 53 -j DROP
 
+docker network rm soxy_network
+docker stop soxy-driver
+docker rm soxy-driver
+
+if [ -f "/run/docker/plugins/soxy-driver.sock" ]
+then
+  #socket file should have been removed
+  echo "found /run/docker/plugins/soxy-driver.sock"
+  exit 1
+fi
 
 ### Testing namespace capabilities
 docker run -d -e DRIVER_NAMESPACE='testing' -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name namespaced-soxy-driver --privileged yassine-soxy-driver
@@ -46,5 +56,17 @@ then
   echo "got exit status $ec"
   exit 1
 fi
+
+docker network rm namespaced_driver_soxy_network
+docker stop testing__soxy-driver
+docker rm testing__soxy-driver
+
+if [ -f "/run/docker/plugins/testing__soxy-driver.sock" ]
+then
+  #socket file should have been removed
+  echo "found /run/docker/plugins/testing__soxy-driver.sock"
+  exit 1
+fi
+
 echo ""
 echo "############## TESTING ENDED ##############"
