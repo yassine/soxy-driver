@@ -24,7 +24,7 @@ func IptablesSoxyChainName() string {
 		return defaultChainName
 	} else {
 		parts := []string{strings.TrimSpace(os.Getenv("DRIVER_NAMESPACE")), defaultChainName}
-		preResult := utils.GetMD5Hash(strings.Join(parts, "__"))[0:18]
+		preResult := utils.GetMD5Hash(strings.Join(parts, "__"))[0:15]
 		parts = []string{preResult, defaultChainName}
 		return strings.Join(parts, "__")
 	}
