@@ -81,11 +81,15 @@ func (d *Driver) AllocateNetwork(request *network.AllocateNetworkRequest) (*netw
 func (d *Driver) DeleteNetwork(request *network.DeleteNetworkRequest) error {
 	logrus.Debug("Received Get DeleteNetwork Request : %s", request.NetworkID)
 	delegate := *d.delegate
-	err := d.redsocksIndex[request.NetworkID].Shutdown()
+	err := delegate.DeleteNetwork(request.NetworkID)
 	if err != nil {
 		return err
 	}
-	return delegate.DeleteNetwork(request.NetworkID)
+	err = d.redsocksIndex[request.NetworkID].Shutdown()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //FreeNetwork driver-utils contract implementation

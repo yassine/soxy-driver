@@ -24,6 +24,7 @@ func init() {
 
 func main() {
 	client, err := docker.NewClient(DockerSocket)
+
 	soxyDriver := driver.New()
 	networks, err := client.ListNetworks()
 
@@ -58,7 +59,7 @@ func main() {
 				//Shutdown the driver
 				soxyDriver.ShutDown()
 			}
-      os.Remove("/run/docker/plugins/"+driverName+".sock")
+			os.Remove("/run/docker/plugins/" + driverName + ".sock")
 			os.Exit(0)
 		}
 	}()

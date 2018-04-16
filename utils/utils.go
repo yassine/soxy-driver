@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -21,4 +23,10 @@ func FindAvailablePort() int64 {
 	port := int64(l.Addr().(*net.TCPAddr).Port)
 	l.Close()
 	return port
+}
+
+func GetMD5Hash(text string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(text))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
