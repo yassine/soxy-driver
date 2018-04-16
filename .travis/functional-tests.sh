@@ -58,8 +58,8 @@ then
 fi
 
 docker network rm namespaced_driver_soxy_network
-docker stop testing__soxy-driver
-docker rm testing__soxy-driver
+docker stop namespaced-soxy-driver
+docker rm namespaced-soxy-driver
 
 if [ -f "/run/docker/plugins/testing__soxy-driver.sock" ]
 then
