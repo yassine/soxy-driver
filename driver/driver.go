@@ -11,7 +11,7 @@ import (
 	"github.com/docker/libnetwork/types"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/sirupsen/logrus"
-	"github.com/yassine/soxy-driver/redsocks"
+  soxyNetwork "github.com/yassine/soxy-driver/network"
 	"github.com/yassine/soxy-driver/tor"
 	"net"
 )
@@ -19,7 +19,7 @@ import (
 //Driver A Driver structure
 type Driver struct {
 	delegate      *driverapi.Driver
-	redsocksIndex map[string]*soxy.RedSocks
+	networksIndex map[string]*soxyNetwork.Context
 	tor           *tor.Tor
 }
 
@@ -36,7 +36,11 @@ func New() Driver {
 	if err != nil {
 		logrus.Error(err.Error())
 	}
-	driver := Driver{delegate: &driverCallback.driver, tor: tor.New(), redsocksIndex: make(map[string]*soxy.RedSocks)}
+	driver := Driver{
+		delegate:      &driverCallback.driver,
+		tor:           tor.New(),
+		networksIndex: make(map[string]*soxyNetwork.Context),
+	}
 	driver.init()
 	return driver
 }
@@ -58,14 +62,17 @@ func (d *Driver) CreateNetwork(request *network.CreateNetworkRequest) error {
 	if link != nil {
 		allocatedBridgeName := link.Attrs().Name
 		logrus.Debug("Allocated the bridge : ", allocatedBridgeName, " to network : ", request.NetworkID)
-		redsocksContext, redsocksError := soxy.New(request.Options[netlabel.GenericData].(map[string]string), allocatedBridgeName, d.tor.Port(), d.tor.DnsPort)
-		if redsocksError == nil {
-			d.redsocksIndex[request.NetworkID] = redsocksContext
-			redsocksContext.Startup()
-		} else {
-			logrus.Error(redsocksError.Error())
-			return redsocksError
+		networkContext, err := soxyNetwork.NewContext(request.NetworkID, allocatedBridgeName, request.Options[netlabel.GenericData].(map[string]string), d.tor.Port(), d.tor.DNSPort);
+		if err != nil {
+			logrus.Error("Error while creating network context.")
+			return err
 		}
+    d.networksIndex[request.NetworkID] = networkContext
+		err = networkContext.Init()
+    if err != nil {
+      logrus.Error("Error while initializing network context.")
+      return err
+    }
 	}
 	return err
 }
@@ -82,14 +89,11 @@ func (d *Driver) DeleteNetwork(request *network.DeleteNetworkRequest) error {
 	logrus.Debug("Received Get DeleteNetwork Request : %s", request.NetworkID)
 	delegate := *d.delegate
 	err := delegate.DeleteNetwork(request.NetworkID)
-	if err != nil {
-		return err
+	if networkContext, ok := d.networksIndex[request.NetworkID]; ok{
+		err = networkContext.Cleanup()
+		delete(d.networksIndex, request.NetworkID)
 	}
-	err = d.redsocksIndex[request.NetworkID].Shutdown()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 //FreeNetwork driver-utils contract implementation
@@ -239,8 +243,8 @@ func (d *Driver) Recover(networks []docker.Network) {
 
 //ShutDown shutdown hook, used to free resources
 func (d *Driver) ShutDown() {
-	for _, value := range d.redsocksIndex {
-		value.Shutdown()
+	for _, value := range d.networksIndex {
+		value.Cleanup()
 	}
 	d.removeChain()
 	(*d.tor).Shutdown()
@@ -251,39 +255,24 @@ func (d *Driver) init() {
 	(*d.tor).Startup()
 }
 
+// utilities
+func (d *Driver) removeChain() {
+  iptables.Raw("-t", string(iptables.Nat), "-F", soxyNetwork.IptablesSoxyChain)
+  iptables.Raw("-t", string(iptables.Nat), "-X", soxyNetwork.IptablesSoxyChain)
+  iptables.Raw("-t", string(iptables.Filter), "-F", soxyNetwork.IptablesSoxyChain)
+  iptables.Raw("-t", string(iptables.Filter), "-X", soxyNetwork.IptablesSoxyChain)
+}
+
 func (d *Driver) createChain() error {
 	//create SOXYDRIVER CHAIN
 	logrus.Debug("creating soxy-driver chain")
 	err := createChain(iptables.Nat, true)
 	if err != nil {
-		return err
+		logrus.Error(err.Error())
 	}
-	err = createChain(iptables.Filter, true)
+	err = createChain(iptables.Filter, false)
+  if err != nil {
+    logrus.Error(err.Error())
+  }
 	return err
-}
-
-func createChain(table iptables.Table, escapeLocal bool) error {
-	args := []string{"-t", string(table), "-N", soxy.IptablesSoxyChain}
-	if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
-		logrus.Debug(fmt.Errorf("couldn't setup soxychain chain in table '%s' : %s", table, err).Error())
-	} else {
-		//escape local addresses
-		if escapeLocal {
-			for _, address := range LocalAddresses {
-				args = []string{"-t", string(table), string(iptables.Append), soxy.IptablesSoxyChain,
-					"-d", address,
-					"-j", "RETURN"}
-				if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
-					logrus.Errorf("couldn't setup in table %s soxychain local addresss escape : %v", address, table)
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func (d *Driver) removeChain() {
-	iptables.RemoveExistingChain(soxy.IptablesSoxyChain, iptables.Nat)
-	iptables.RemoveExistingChain(soxy.IptablesSoxyChain, iptables.Filter)
 }

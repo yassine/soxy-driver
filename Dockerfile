@@ -15,7 +15,7 @@ RUN apk update \
     && apk add --no-cache --virtual .soxy-build-deps \
             ca-certificates \
             curl \
-		        "go=1.10.1-r0" \
+		        "go>1.10.1-r0" \
 		        git \
 		        gcc \
 		        libc-dev \

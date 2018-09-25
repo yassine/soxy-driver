@@ -25,6 +25,7 @@ func FindAvailablePort() int64 {
 	return port
 }
 
+//GetMD5Hash returns MD5 hash of a given string
 func GetMD5Hash(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(text))

@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	fixtureNetworkIp = "172.21.1.1/24"
+	fixtureNetworkIP = "172.21.1.1/24"
 	fixtureMac       = "10:10:10:10:10:10"
 	fixtureIpv6      = "fe80::800:27ff:fe00:0"
 )
 
 func TestInterfaceInfoProxyInit(t *testing.T) {
-	address, _, _ := net.ParseCIDR(fixtureNetworkIp)
+	address, _, _ := net.ParseCIDR(fixtureNetworkIP)
 	proxy := createInterface()
 	assert.Equal(t, proxy.ip.IP, address)
 }
@@ -28,7 +28,7 @@ func TestInterfaceInfoProxySetMacAddress(t *testing.T) {
 
 func TestInterfaceInfoProxySetIPAddress(t *testing.T) {
 	iface := createInterface()
-	_, netAddress, _ := net.ParseCIDR(fixtureNetworkIp)
+	_, netAddress, _ := net.ParseCIDR(fixtureNetworkIP)
 	iface.SetIPAddress(netAddress)
 	assert.Equal(t, iface.response.Interface.Address, netAddress.IP.String())
 }
@@ -40,7 +40,7 @@ func TestInterfaceInfoProxyMacAddress(t *testing.T) {
 
 func TestInterfaceInfoProxyAddress(t *testing.T) {
 	iface := createInterface()
-	address, _, _ := net.ParseCIDR(fixtureNetworkIp)
+	address, _, _ := net.ParseCIDR(fixtureNetworkIP)
 	assert.Equal(t, iface.ip.IP, address)
 }
 
@@ -67,7 +67,7 @@ func mockRequest() *network.CreateEndpointRequest {
 		EndpointID: "EP0000",
 		Options:    make(map[string]interface{}),
 		Interface: &network.EndpointInterface{
-			Address:     fixtureNetworkIp,
+			Address:     fixtureNetworkIP,
 			MacAddress:  fixtureMac,
 			AddressIPv6: fixtureIpv6,
 		},

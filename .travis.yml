@@ -22,7 +22,7 @@ jobs:
     install:
       - docker build . -t yassine-soxy-driver
       - docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine-soxy-driver
-      - docker network create -d soxy-driver soxy_network
+
     script:
       - ./.travis/functional-tests.sh
   - stage: deploy
