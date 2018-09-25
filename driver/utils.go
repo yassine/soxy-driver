@@ -2,9 +2,12 @@ package driver
 
 import (
 	"fmt"
+	"github.com/docker/libnetwork/iptables"
 	"github.com/docker/libnetwork/netlabel"
 	"github.com/docker/libnetwork/types"
+	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+  soxyNetwork "github.com/yassine/soxy-driver/network"
 	"net"
 )
 
@@ -47,6 +50,25 @@ func protocolValueOf(val uint8) types.Protocol {
 		return types.ICMP
 	}
 	return types.ICMP
+}
+
+func createChain(table iptables.Table, escapeLocal bool) error {
+	args := []string{"-t", string(table), "-N", soxyNetwork.IptablesSoxyChain}
+	if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
+		logrus.Debug(fmt.Errorf("couldn't setup soxychain chain in table '%s' : %s", table, err).Error())
+	}
+  if escapeLocal {
+    for _, address := range LocalAddresses {
+      args = []string{"-t", string(table), string(iptables.Insert), soxyNetwork.IptablesSoxyChain,
+        "-d", address,
+        "-j", "RETURN"}
+      if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
+        logrus.Errorf("couldn't setup in table %s soxychain local addresss escape : %v", address, table)
+        return err
+      }
+    }
+  }
+	return nil
 }
 
 var (

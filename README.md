@@ -10,14 +10,17 @@ With respect to TCP-tunneling, [redsocks](https://github.com/darkk/redsocks/) is
 The driver embeds a [tor](https://www.torproject.org) instance that is used as a fallback socks proxy.
 
 ## Usage
-The following example uses the driver embedded tor proxy:
+
+The following example uses implicitly the driver embedded fallback tor proxy:
 
 1) Pull the image
 
 `docker pull yassine/soxy-driver`
+
 2) Run the driver container
 
 `docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine/soxy-driver`
+
 3) Create a network based on the driver
 
 `docker network create -d soxy-driver soxy_network`
@@ -46,6 +49,7 @@ Option | Description | Default
 *soxy.proxytype* | The proxy type | socks5 (available choices : socks4, socks5, http-connect, http-relay)
 *soxy.proxyuser* | The proxy user if the proxy requires Authentication | none
 *soxy.proxypassword* | The proxy password if the proxy requires Authentication | none
+*soxy.blockUDP* | Block networks outgoing UDP traffic but DNS | false
 
 > Configuration params maps to one given network only, therefore it would be passed when creating any network through `docker network create`. 
 If the network configuration is skipped, the driver falls-back on the singleton embedded tor instance socks proxy. 
@@ -64,4 +68,3 @@ Example:
 3) The driver name you would used should now be prefixed by `my-namespace__` as follows :
 
 `docker network create -d my-namespace__soxy-driver namespaced_driver_soxy_network`
-
