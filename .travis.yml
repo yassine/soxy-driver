@@ -38,4 +38,4 @@ stages:
   - test
   - functional-test
   - name: deploy
-    if: branch = master
+    if: branch = releases

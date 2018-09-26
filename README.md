@@ -14,28 +14,30 @@ The driver embeds a [tor](https://www.torproject.org) instance that is used as a
 The following example uses implicitly the driver embedded fallback tor proxy:
 
 1) Pull the image
-
-`docker pull yassine/soxy-driver`
-
+    ```
+    docker pull yassine/soxy-driver
+    ```
 2) Run the driver container
-
-`docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine/soxy-driver`
-
+    ```
+    docker run -d -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --name soxy-driver --privileged yassine/soxy-driver
+    ```
 3) Create a network based on the driver
-
-`docker network create -d soxy-driver soxy_network`
-
-> Note 1 : If you want to test against another proxy than the embedded tor-based one, you can pass the proxy params using
+    ```
+    docker network create -d soxy-driver soxy_network
+    ```
+> Note : If you want to test against another proxy than the embedded tor-based one, you can pass the proxy params using
 the `-o` label. For example : `docker network create -d soxy-driver soxy_network -o "soxy.proxyaddress"="%PROXY_HOST%" -o "soxy.proxyport"="%PROXY_PORT%"`, see the next section for all available
 configuration options.
 
 You can now create a container that uses the network formerly created and test the tunneling:
  
-`docker run --rm -it --dns 8.8.8.8 --net soxy_network uzyexe/curl -s https://check.torproject.org/api/ip`
+```
+docker run --rm -it --dns 8.8.8.8 --net soxy_network uzyexe/curl -s https://check.torproject.org/api/ip
+```
 
 Output : `{"IsTor":true,"IP":"%SOME_TOR_EXIT_NODE_IP_HERE%"}`
 
-> Note 2 : It is mandatory to specify a DNS server when creating containers, as by default docker will configure one through
+> Note : It is mandatory to specify a DNS server when creating containers, as by default docker will configure one through
 the loopback interface (127.0.0.22 as bind address). As per se, it is impossible otherwise for the driver to intercept/tunnel the 
 DNS traffic and prevent from  [dns-leaks](https://en.wikipedia.org/wiki/DNS_leak).
 
@@ -62,9 +64,10 @@ Example:
 
 1) Assume a namespace 'my-namespace'
 2) You would run the driver container as follows:
-
-`docker run -d -e DRIVER_NAMESPACE='my-namespace' -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --privileged yassine-soxy-driver`
-
-3) The driver name you would used should now be prefixed by `my-namespace__` as follows :
-
-`docker network create -d my-namespace__soxy-driver namespaced_driver_soxy_network`
+    ```
+    docker run -d -e DRIVER_NAMESPACE='my-namespace' -v '/var/run/docker.sock':'/var/run/docker.sock' -v '/run/docker/plugins':'/run/docker/plugins' --net host --privileged yassine-soxy-driver
+    ```
+3) The driver name you would use should now be prefixed by `my-namespace__` as follows :
+    ```
+    docker network create -d my-namespace__soxy-driver namespaced_driver_soxy_network
+    ```

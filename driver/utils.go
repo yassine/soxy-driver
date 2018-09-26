@@ -7,7 +7,7 @@ import (
 	"github.com/docker/libnetwork/types"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-  soxyNetwork "github.com/yassine/soxy-driver/network"
+	soxyNetwork "github.com/yassine/soxy-driver/network"
 	"net"
 )
 
@@ -57,17 +57,17 @@ func createChain(table iptables.Table, escapeLocal bool) error {
 	if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
 		logrus.Debug(fmt.Errorf("couldn't setup soxychain chain in table '%s' : %s", table, err).Error())
 	}
-  if escapeLocal {
-    for _, address := range LocalAddresses {
-      args = []string{"-t", string(table), string(iptables.Insert), soxyNetwork.IptablesSoxyChain,
-        "-d", address,
-        "-j", "RETURN"}
-      if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
-        logrus.Errorf("couldn't setup in table %s soxychain local addresss escape : %v", address, table)
-        return err
-      }
-    }
-  }
+	if escapeLocal {
+		for _, address := range LocalAddresses {
+			args = []string{"-t", string(table), string(iptables.Insert), soxyNetwork.IptablesSoxyChain,
+				"-d", address,
+				"-j", "RETURN"}
+			if output, err := iptables.Raw(args...); err != nil || len(output) != 0 {
+				logrus.Errorf("couldn't setup in table %s soxychain local addresss escape : %v", address, table)
+				return err
+			}
+		}
+	}
 	return nil
 }
 

@@ -2,6 +2,7 @@ package redsocks
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/yassine/soxy-driver/utils"
 	"io/ioutil"
 	"net"
 	"os"
@@ -12,32 +13,32 @@ import (
 
 //Context A base structure representing a Redsocks execution context
 type Context struct {
-	Command       *exec.Cmd
-	Configfile    *os.File
-	isRunning     bool
-  *Configuration
+	Command    *exec.Cmd
+	Configfile *os.File
+	isRunning  bool
+	*Configuration
 	sync.Mutex
 }
 
 //Configuration redsocks configuration params
 type Configuration struct {
-  //BindPort the port on which redsocks would listen to tunnel traffic
-  BindPort int64
-  //BindAddress the address on which redsocks would listen to tunnel traffic
-  BindAddress string
-  ProxyAddress string
-  //ProxyPort the proxy port
-  ProxyPort int64
-  //ProxyType the proxy type. Available options : as per redsocks support
-  ProxyType string
-  //ProxyUser the proxy user (if authentication applies)
-  ProxyUser string
-  //ProxyPassword the proxy password (if authentication applies)
-  ProxyPassword string
-  //TunnelPort the port through which traffic is tunneled
-  TunnelPort int64
-  //TunnelBindAddress the tunnel bind address
-  TunnelBindAddress string
+	//BindPort the port on which redsocks would listen to tunnel traffic
+	BindPort int64
+	//BindAddress the address on which redsocks would listen to tunnel traffic
+	BindAddress  string
+	ProxyAddress string
+	//ProxyPort the proxy port
+	ProxyPort int64
+	//ProxyType the proxy type. Available options : as per redsocks support
+	ProxyType string
+	//ProxyUser the proxy user (if authentication applies)
+	ProxyUser string
+	//ProxyPassword the proxy password (if authentication applies)
+	ProxyPassword string
+	//TunnelPort the port through which traffic is tunneled
+	TunnelPort int64
+	//TunnelBindAddress the tunnel bind address
+	TunnelBindAddress string
 }
 
 //Startup Start redsocks with the given configuration
@@ -55,9 +56,8 @@ func (r *Context) Shutdown() error {
 	return err
 }
 
-
 //NewContext New Creates and initialize a Redsocks context
-func NewContext(configuration *Configuration ) (*Context, error) {
+func NewContext(configuration *Configuration) (*Context, error) {
 	redsocks := &Context{
 		isRunning:     false,
 		Configuration: configuration,
@@ -78,10 +78,7 @@ func (r *Context) startup() error {
 	if !r.isRunning {
 		r.isRunning = true
 		err := r.Command.Start()
-		if err != nil {
-			logrus.Error(err)
-			return err
-		}
+		utils.LogIfNotNull(err)
 	}
 	return nil
 }
@@ -89,8 +86,10 @@ func (r *Context) startup() error {
 func (r *Context) shutdown() error {
 	//Kill the process
 	err := r.Command.Process.Kill()
+	utils.LogIfNotNull(err)
 	//Remove config file
 	err = os.Remove(r.Configfile.Name())
+	utils.LogIfNotNull(err)
 	return err
 }
 

@@ -15,4 +15,3 @@ func iptablesSoxyChainName() string {
 	parts = []string{preResult, defaultChainName}
 	return strings.Join(parts, "__")
 }
-

@@ -65,6 +65,7 @@ func (t *Tor) Startup() error {
 func (t *Tor) Shutdown() error {
 	//Kill the process
 	err := t.command.Process.Kill()
+	utils.LogIfNotNull(err)
 	//Remove config file
 	err = os.Remove(t.configfile.Name())
 	return err

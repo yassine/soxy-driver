@@ -5,6 +5,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"github.com/sirupsen/logrus"
 	"github.com/yassine/soxy-driver/driver"
+	"github.com/yassine/soxy-driver/utils"
 	"os"
 	"os/signal"
 	"strings"
@@ -24,7 +25,7 @@ func init() {
 
 func main() {
 	client, err := docker.NewClient(DockerSocket)
-
+	utils.LogIfNotNull(err)
 	soxyDriver := driver.New()
 	networks, err := client.ListNetworks()
 

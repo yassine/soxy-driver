@@ -11,7 +11,7 @@ import (
 	"github.com/docker/libnetwork/types"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/sirupsen/logrus"
-  soxyNetwork "github.com/yassine/soxy-driver/network"
+	soxyNetwork "github.com/yassine/soxy-driver/network"
 	"github.com/yassine/soxy-driver/tor"
 	"net"
 )
@@ -62,17 +62,17 @@ func (d *Driver) CreateNetwork(request *network.CreateNetworkRequest) error {
 	if link != nil {
 		allocatedBridgeName := link.Attrs().Name
 		logrus.Debug("Allocated the bridge : ", allocatedBridgeName, " to network : ", request.NetworkID)
-		networkContext, err := soxyNetwork.NewContext(request.NetworkID, allocatedBridgeName, request.Options[netlabel.GenericData].(map[string]string), d.tor.Port(), d.tor.DNSPort);
+		networkContext, err := soxyNetwork.NewContext(request.NetworkID, allocatedBridgeName, request.Options[netlabel.GenericData].(map[string]string), d.tor.Port(), d.tor.DNSPort)
 		if err != nil {
 			logrus.Error("Error while creating network context.")
 			return err
 		}
-    d.networksIndex[request.NetworkID] = networkContext
+		d.networksIndex[request.NetworkID] = networkContext
 		err = networkContext.Init()
-    if err != nil {
-      logrus.Error("Error while initializing network context.")
-      return err
-    }
+		if err != nil {
+			logrus.Error("Error while initializing network context.")
+			return err
+		}
 	}
 	return err
 }
@@ -89,7 +89,7 @@ func (d *Driver) DeleteNetwork(request *network.DeleteNetworkRequest) error {
 	logrus.Debug("Received Get DeleteNetwork Request : %s", request.NetworkID)
 	delegate := *d.delegate
 	err := delegate.DeleteNetwork(request.NetworkID)
-	if networkContext, ok := d.networksIndex[request.NetworkID]; ok{
+	if networkContext, ok := d.networksIndex[request.NetworkID]; ok {
 		err = networkContext.Cleanup()
 		delete(d.networksIndex, request.NetworkID)
 	}
@@ -257,10 +257,10 @@ func (d *Driver) init() {
 
 // utilities
 func (d *Driver) removeChain() {
-  iptables.Raw("-t", string(iptables.Nat), "-F", soxyNetwork.IptablesSoxyChain)
-  iptables.Raw("-t", string(iptables.Nat), "-X", soxyNetwork.IptablesSoxyChain)
-  iptables.Raw("-t", string(iptables.Filter), "-F", soxyNetwork.IptablesSoxyChain)
-  iptables.Raw("-t", string(iptables.Filter), "-X", soxyNetwork.IptablesSoxyChain)
+	iptables.Raw("-t", string(iptables.Nat), "-F", soxyNetwork.IptablesSoxyChain)
+	iptables.Raw("-t", string(iptables.Nat), "-X", soxyNetwork.IptablesSoxyChain)
+	iptables.Raw("-t", string(iptables.Filter), "-F", soxyNetwork.IptablesSoxyChain)
+	iptables.Raw("-t", string(iptables.Filter), "-X", soxyNetwork.IptablesSoxyChain)
 }
 
 func (d *Driver) createChain() error {
@@ -271,8 +271,8 @@ func (d *Driver) createChain() error {
 		logrus.Error(err.Error())
 	}
 	err = createChain(iptables.Filter, false)
-  if err != nil {
-    logrus.Error(err.Error())
-  }
+	if err != nil {
+		logrus.Error(err.Error())
+	}
 	return err
 }

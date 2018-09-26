@@ -31,3 +31,10 @@ func GetMD5Hash(text string) string {
 	hasher.Write([]byte(text))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
+
+//LogIfNotNull log the error if it is not null
+func LogIfNotNull(err error) {
+	if err != nil {
+		logrus.Error(err.Error())
+	}
+}
